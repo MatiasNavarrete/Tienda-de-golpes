@@ -18,19 +18,19 @@ import lombok.NoArgsConstructor;
 public class Producto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @NotBlank(message = "El nombre del producto es obligatorio")
     @Size(min= 3, max= 50, message = "El nombre del producto debe tener entre 3 y 50 caracteres")
     private String nombre;
 
     @NotBlank(message = "La descripción del producto no debe estar vacía")
-    private String descripción;
+    private String descripcion;
 
     @Positive(message = "El precio debe ser mayor a cero")
     private int precio;
 
     @Min(value = 0, message = "El stock no puede se menor a cero")
-    private int stock;
+    private Integer stock;
 
 }
