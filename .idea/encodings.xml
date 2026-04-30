@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
+<<<<<<< HEAD
     <file url="file://$PROJECT_DIR$/envio/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/pago/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/pedido/src/main/java" charset="UTF-8" />
+=======
+    <file url="file://$PROJECT_DIR$/Busqueda/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Notificaciones/Notificaciones/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/Notificaciones/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/usuarios/src/main/java" charset="UTF-8" />
+>>>>>>> 55d46b32097288252e89d500b61e96a98c1bcdb7
   </component>
 </project>

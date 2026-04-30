@@ -2,25 +2,52 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
+<<<<<<< HEAD
       <profile default="true" name="Default" enabled="true" />
       <profile name="Annotation profile for pedido" enabled="true">
+=======
+      <profile name="Annotation profile for Busqueda" enabled="true">
+>>>>>>> 55d46b32097288252e89d500b61e96a98c1bcdb7
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
+<<<<<<< HEAD
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.44/lombok-1.18.44.jar" />
         </processorPath>
         <module name="pedido" />
         <module name="envio" />
         <module name="pago" />
+=======
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+        </processorPath>
+        <module name="Busqueda" />
+      </profile>
+      <profile name="Annotation profile for Notificaciones" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+        </processorPath>
+        <module name="usuarios" />
+        <module name="Notificaciones" />
+>>>>>>> 55d46b32097288252e89d500b61e96a98c1bcdb7
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+<<<<<<< HEAD
       <module name="envio" options="-parameters" />
       <module name="pago" options="-parameters" />
       <module name="pedido" options="-parameters" />
+=======
+      <module name="Busqueda" options="-parameters" />
+      <module name="Notificaciones" options="-parameters" />
+      <module name="usuarios" options="-parameters" />
+>>>>>>> 55d46b32097288252e89d500b61e96a98c1bcdb7
     </option>
   </component>
 </project>

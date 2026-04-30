@@ -3,3 +3,10 @@
 /workspace.xml
 # Environment-dependent path to Maven home directory
 /mavenHomeManager.xml
+<<<<<<< HEAD
+=======
+target/
+.idea/
+*.iml/
+.help
+>>>>>>> 55d46b32097288252e89d500b61e96a98c1bcdb7
