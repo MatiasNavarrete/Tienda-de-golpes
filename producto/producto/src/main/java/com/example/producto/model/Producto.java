@@ -30,7 +30,4 @@ public class Producto {
     @Positive(message = "El precio debe ser mayor a cero")
     private int precio;
 
-    @Min(value = 0, message = "El stock no puede se menor a cero")
-    private Integer stock;
-
 }
