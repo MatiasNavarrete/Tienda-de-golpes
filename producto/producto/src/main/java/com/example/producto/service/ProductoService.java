@@ -3,7 +3,6 @@ package com.example.producto.service;
 import com.example.producto.dto.InventarioResponse;
 import com.example.producto.model.Producto;
 import com.example.producto.repository.ProductoRepository;
-import org.graalvm.nativeimage.IsolateThread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
