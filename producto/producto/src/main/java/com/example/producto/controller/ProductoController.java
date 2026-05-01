@@ -1,5 +1,6 @@
 package com.example.producto.controller;
 
+import com.example.producto.dto.ProductoDTO;
 import com.example.producto.model.Producto;
 import com.example.producto.service.ProductoService;
 import jakarta.validation.Valid;
@@ -25,7 +26,7 @@ public class ProductoController {
 
     // obtener un producto por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Producto> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<ProductoDTO> obtenerPorId(@PathVariable Long id) {
         return productoService.buscarPorId(id)
                 .map(producto -> new ResponseEntity<>(producto, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
