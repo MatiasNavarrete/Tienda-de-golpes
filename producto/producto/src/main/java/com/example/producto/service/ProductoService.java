@@ -10,7 +10,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
 import java.util.Optional;
 
-
 @Service
 public class ProductoService {
 
@@ -25,19 +24,27 @@ public class ProductoService {
     }
 
     public Optional<Producto> buscarPorId(Long id){
-        //buscapos el producto en nuestra propia base de datos
+        System.out.println(">>> [DEBUG] Buscando producto en BD local con ID: " + id);
+
         Optional<Producto> producto = productoRepository.findById(id);
 
-        //si existe, llamamos al inventario para obtener el stock
         if (producto.isPresent()) {
-            InventarioResponse inventario = webClient.get()
-                    .uri("/api/v1/inventario/{id}", id)
-                    .retrieve()
-                    .bodyToMono(InventarioResponse.class)
-                    .block();
-            System.out.println("Stock obtendo desde Inventario: "+
-                                (inventario != null ? inventario.getStock() : "Sin stock disponible"));
+            System.out.println(">>> [DEBUG] Producto encontrado. Consultando stock en inventario...");
 
+            try {
+                InventarioResponse inventario = webClient.get()
+                        .uri("/api/v1/inventario/{id}", id)
+                        .retrieve()
+                        .bodyToMono(InventarioResponse.class)
+                        .block();
+
+                System.out.println(">>> [DEBUG] Respuesta recibida de Inventario: " +
+                        (inventario != null ? "Stock = " + inventario.getStock() : "Inventario devolvió null"));
+            } catch (Exception e) {
+                System.err.println(">>> [ERROR] Falló la comunicación con Inventario: " + e.getMessage());
+            }
+        } else {
+            System.out.println(">>> [DEBUG] Producto con ID " + id + " no existe en BD local.");
         }
 
         return producto;
