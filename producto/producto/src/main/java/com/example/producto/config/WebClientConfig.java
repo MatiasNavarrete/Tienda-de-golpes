@@ -8,8 +8,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
 
     @Bean
-    public WebClient webClient(WebClient.Builder builder) {
-        //url del puerto donde corre el microservicio inventario
-        return builder.baseUrl("http://localhost:9090").build();
+    public WebClient webClient() {
+        //llamamos directamente al builder
+        return WebClient.builder()
+                .baseUrl("http://localhost:9090")
+                .build();
     }
 }
