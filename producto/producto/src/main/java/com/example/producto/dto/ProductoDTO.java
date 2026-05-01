@@ -11,6 +11,6 @@ public class ProductoDTO {
     private Long id;
     private String nombre;
     private String descripcion;
-    private Double precio;
+    private int precio;
     private Integer stock; //campo nuevo que viene del otro servicio inventario
 }
