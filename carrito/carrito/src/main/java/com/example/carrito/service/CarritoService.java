@@ -21,6 +21,25 @@ public class CarritoService {
     @Autowired private ItemCarritoRepository itemRepository;
     @Autowired private WebClient webClient;
 
+    public CarritoDTO reducirProducto(String usuarioId, Long productoId, int cantidadAReducir) {
+        Carrito carrito = carritoRepository.findByUsuarioId(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
+
+        ItemCarrito item = itemRepository.findByCarritoIdAndProductoId(carrito.getId(), productoId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado en el carrito"));
+
+        int nuevaCantidad = item.getCantidad() - cantidadAReducir;
+
+        if (nuevaCantidad <= 0) {
+            itemRepository.delete(item); // Se elimina si llega a 0 o menos
+        } else {
+            item.setCantidad(nuevaCantidad);
+            itemRepository.save(item);
+        }
+
+        return obtenerCarrito(usuarioId);
+    }
+
     public CarritoDTO agregarProducto(String usuarioId, ItemRequestDTO request) {
         //obtener o crear el carrito
         Carrito carrito = carritoRepository.findByUsuarioId(usuarioId)
