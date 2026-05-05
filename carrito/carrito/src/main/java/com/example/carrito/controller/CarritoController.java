@@ -15,6 +15,16 @@ public class CarritoController {
     @Autowired
     private CarritoService carritoService;
 
+    @PatchMapping("/{usuarioId}/producto/{productoId}/reducir")
+    public ResponseEntity<CarritoDTO> reducirProducto(
+            @PathVariable String usuarioId,
+            @PathVariable Long productoId,
+            @RequestParam int cantidad) { // Pasamos la cantidad por parámetro
+
+        CarritoDTO carrito = carritoService.reducirProducto(usuarioId, productoId, cantidad);
+        return ResponseEntity.ok(carrito);
+    }
+
     //agregar producto al carrito
     @PostMapping("/{usuarioId}")
     public ResponseEntity<CarritoDTO> agregarProducto(
