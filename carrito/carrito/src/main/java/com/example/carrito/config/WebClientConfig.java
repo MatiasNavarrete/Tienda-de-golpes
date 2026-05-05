@@ -8,8 +8,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
 
     @Bean
-    public WebClient webClient(WebClient.Builder builder) {
-        //la URL base del servicio de productos
-        return builder.baseUrl("http://localhost:8080").build();
+    public WebClient webClient() {
+        //llamamos la ruta del servicio de productos
+        return WebClient.create("http://localhost:8080");
+
     }
 }
