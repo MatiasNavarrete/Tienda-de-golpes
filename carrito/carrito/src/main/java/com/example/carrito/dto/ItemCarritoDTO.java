@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class ItemCarritoDTO {
     private Long productoId;
     private String nombre;
-    private Double precio;
+    private int precio;
     private Integer cantidad;
 
 }
