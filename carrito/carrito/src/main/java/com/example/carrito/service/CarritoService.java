@@ -78,4 +78,17 @@ public class CarritoService {
 
         return new CarritoDTO(carrito.getId(), carrito.getUsuarioId(), itemDto);
     }
+    public void eliminarProducto(String usuarioId, Long productoId) {
+        // 1. Buscamos el carrito del usuario
+        Carrito carrito = carritoRepository.findByUsuarioId(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
+
+        // 2. Buscamos el item específico dentro de ese carrito
+        ItemCarrito item = itemRepository.findByCarritoIdAndProductoId(carrito.getId(), productoId)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado en el carrito"));
+
+        // 3. Eliminamos el item
+        itemRepository.delete(item);
+
+    }
 }
