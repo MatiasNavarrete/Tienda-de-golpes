@@ -13,4 +13,8 @@ public class ItemCarritoDTO {
     private int precio;
     private Integer cantidad;
 
+    //para subtotal en carrito
+    public int getSubtotal() {
+        return this.precio * this.cantidad;
+    }
 }
