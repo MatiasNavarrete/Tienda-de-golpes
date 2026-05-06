@@ -22,6 +22,5 @@ public class ProductoDTO {
     @Positive(message = "¡El precio del producto debe ser mayor a 0!")
     private int precio;
 
-    @Min(value = 0, message = "¡El stock del producto no puede ser negativo!")
     private Integer stock; //campo nuevo que viene del otro servicio inventario
 }
