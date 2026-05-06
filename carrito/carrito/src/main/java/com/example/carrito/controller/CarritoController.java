@@ -4,12 +4,15 @@ import com.example.carrito.dto.CarritoDTO;
 import com.example.carrito.dto.ItemRequestDTO;
 import com.example.carrito.service.CarritoService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/carrito")
+@Validated
 public class CarritoController {
 
     @Autowired
@@ -19,7 +22,7 @@ public class CarritoController {
     public ResponseEntity<CarritoDTO> reducirProducto(
             @PathVariable String usuarioId,
             @PathVariable Long productoId,
-            @RequestParam int cantidad) { // Pasamos la cantidad por parámetro
+            @RequestParam @Min(value = 1, message = "La cantidad a reducir debe ser al menos 1") int cantidad) { // Pasamos la cantidad por parámetro
 
         CarritoDTO carrito = carritoService.reducirProducto(usuarioId, productoId, cantidad);
         return ResponseEntity.ok(carrito);
