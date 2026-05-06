@@ -65,8 +65,39 @@ public class ProductoService {
         }
     }
 
-    public Producto guardar(Producto producto){
-        return productoRepository.save(producto);
+    public ProductoDTO guardar(ProductoDTO dto){
+
+        //convierte DTO a entidad
+        Producto producto = new Producto();
+        producto.setId(dto.getId());
+        producto.setNombre(dto.getNombre());
+        producto.setDescripcion(dto.getDescripcion());
+        producto.setPrecio(dto.getPrecio());
+
+        //se guarda en BD
+        Producto guardado = productoRepository.save(producto);
+
+        //consulta el stock real al servicio de inventario
+        Integer stockActual = 0;
+        try {
+            InventarioResponse inv = webClient.get()
+                    .uri("/api/v1/inventario/{id}", guardado.getId())
+                    .retrieve()
+                    .bodyToMono(InventarioResponse.class)
+                    .block();
+            if (inv != null) stockActual = inv.getStock();
+        } catch (Exception e) {
+            System.err.println("No se pudo obtener stock: " + e.getMessage());
+        }
+
+        return new ProductoDTO(
+                guardado.getId(),
+                guardado.getNombre(),
+                guardado.getDescripcion(),
+                guardado.getPrecio(),
+                stockActual
+
+        );
     }
 
     public void eliminar(Long id){

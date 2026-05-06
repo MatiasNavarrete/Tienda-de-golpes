@@ -34,18 +34,17 @@ public class ProductoController {
 
     // crear un nuevo producto
     @PostMapping
-    public ResponseEntity<Producto> crear(@Valid @RequestBody Producto producto) {
-        Producto nuevoProducto = productoService.guardar(producto);
-        return new ResponseEntity<>(nuevoProducto, HttpStatus.CREATED);
+    public ResponseEntity<ProductoDTO> crear(@Valid @RequestBody ProductoDTO productoDTO) {
+        return new ResponseEntity<>(productoService.guardar(productoDTO), HttpStatus.CREATED);
     }
 
     // actualizar un producto
     @PutMapping("/{id}")
-    public ResponseEntity<Producto> actualizar(@PathVariable Long id, @Valid @RequestBody Producto producto) {
+    public ResponseEntity<ProductoDTO> actualizar(@PathVariable Long id, @Valid @RequestBody ProductoDTO productoDTO) {
         return productoService.buscarPorId(id)
                 .map(p -> {
-                    producto.setId(id); // Aseguramos que el ID sea el correcto
-                    return new ResponseEntity<>(productoService.guardar(producto), HttpStatus.OK);
+                    productoDTO.setId(id); // Aseguramos que el ID sea el correcto
+                    return new ResponseEntity<>(productoService.guardar(productoDTO), HttpStatus.OK);
                 })
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
