@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductoService {
@@ -20,8 +21,37 @@ public class ProductoService {
     @Autowired
     private WebClient webClient;
 
-    public List<Producto> listarTodos(){
-        return productoRepository.findAll();
+    public List<ProductoDTO> listarTodos() {
+        //traemos todos los productos de la BD
+        List<Producto> productos = productoRepository.findAll();
+
+        //convertimos la lista de Producto a ProductoDTO inyectando el stock
+        return productos.stream().map(producto -> {
+            Integer stock = 0;
+            try {
+                // Consultamos el microservicio de inventario para cada producto
+                InventarioResponse inventario = webClient.get()
+                        .uri("/api/v1/inventario/{id}", producto.getId())
+                        .retrieve()
+                        .bodyToMono(InventarioResponse.class)
+                        .block(); //bloqueo necesario para completar el DTO antes de enviarlo
+
+                if (inventario != null) {
+                    stock = inventario.getStock();
+                }
+            } catch (Exception e) {
+                System.err.println(">>> [ERROR] No se pudo obtener stock para el producto " + producto.getId());
+            }
+
+            //devolvemos el DTO con toda la info
+            return new ProductoDTO(
+                    producto.getId(),
+                    producto.getNombre(),
+                    producto.getDescripcion(),
+                    producto.getPrecio(),
+                    stock
+            );
+        }).collect(Collectors.toList());
     }
 
     public Optional<ProductoDTO> buscarPorId(Long id){
