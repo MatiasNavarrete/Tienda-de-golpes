@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.validation.ConstraintViolationException; // Importante para @RequestParam
+
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,5 +40,13 @@ public class GlobalExceptionHandler {
         error.put("error", "Conflicto de Inventario");
         error.put("mensaje", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(ProductoNoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> handleProductoNoEncontrado(ProductoNoEncontradoException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("error", "Producto inextistente");
+        response.put("mensaje", ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 }
