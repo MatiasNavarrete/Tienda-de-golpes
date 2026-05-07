@@ -1,6 +1,7 @@
 package com.example.carrito.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -30,5 +31,12 @@ public class GlobalExceptionHandler {
         ex.getConstraintViolations().forEach(violation ->
                 errors.put(violation.getPropertyPath().toString(), violation.getMessage()));
         return errors;
+    }
+    @ExceptionHandler(StockInsuficienteException.class)
+    public ResponseEntity<Map<String, String>> handleStockInsuficiente(StockInsuficienteException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "Conflicto de Inventario");
+        error.put("mensaje", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 }
