@@ -18,7 +18,7 @@ public class Inventario {
     private Long id;
 
     //guardamos el ID del producto del otro microservicio "producto".
-    @Column(name = "producto_id", nullable = false)
+    @Column(name = "producto_id", nullable = false, unique = true)
     private Long productoId;
 
     @PositiveOrZero(message = "El stock no puede ser negativo")
