@@ -1,5 +1,6 @@
 package com.example.inventario.controller;
 
+import com.example.dto.InventarioDTO;
 import com.example.inventario.model.Inventario;
 import com.example.inventario.service.InventarioService;
 import jakarta.validation.Valid;
@@ -19,22 +20,22 @@ public class InventarioController {
 
     //obtener stock por ID de producto (comunicación con WebClient)
     @GetMapping("/{productoId}")
-    public ResponseEntity<Inventario> obtenerPorProductoId(@PathVariable Long productoId) {
+    public ResponseEntity<InventarioDTO> obtenerPorProductoId(@PathVariable Long productoId) {
         return inventarioService.obtenerPorProductoId(productoId)
-                .map(inv -> new ResponseEntity<>(inv, HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     //listar todo el inventario
     @GetMapping
-    public List<Inventario> listarTodos() {
+    public List<InventarioDTO> listarTodos() {
         return inventarioService.listarTodos();
     }
 
     //guardar nuevo registro de stock
     @PostMapping
-    public ResponseEntity<Inventario> crear(@Valid @RequestBody Inventario inventario) {
-        return new ResponseEntity<>(inventarioService.guardar(inventario), HttpStatus.CREATED);
+    public ResponseEntity<InventarioDTO> crear(@Valid @RequestBody InventarioDTO inventarioDTO) {
+        return new ResponseEntity<>(inventarioService.guardar(inventarioDTO), HttpStatus.CREATED);
 
     }
 }

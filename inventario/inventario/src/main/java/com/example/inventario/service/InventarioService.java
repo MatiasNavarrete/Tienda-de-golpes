@@ -1,5 +1,6 @@
 package com.example.inventario.service;
 
+import com.example.dto.InventarioDTO;
 import com.example.inventario.model.Inventario;
 import com.example.inventario.repository.InventarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class InventarioService {
@@ -14,19 +16,35 @@ public class InventarioService {
     @Autowired
     private InventarioRepository inventarioRepository;
 
-    //listar todo el inventario
-    public List<Inventario> listarTodos() {
-        return inventarioRepository.findAll();
+    //convertimos entidad a DTO al listar
+    public List<InventarioDTO> listarTodos() {
+        return inventarioRepository.findAll().stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
     }
 
-    //buscar stock por ID de producto (para la futura comunicación)
-    public Optional<Inventario> obtenerPorProductoId(Long productoId) {
-        return inventarioRepository.findByProductoId(productoId);
+    //convertimos entidad a DTO al buscar
+    public Optional<InventarioDTO> obtenerPorProductoId(Long productoId) {
+        return inventarioRepository.findByProductoId(productoId)
+                .map(this::convertirADTO);
     }
 
     //guardar o actualizar stock
-    public Inventario guardar(Inventario inventario) {
-        return inventarioRepository.save(inventario);
+    public InventarioDTO guardar(InventarioDTO dto) {
+        Inventario inv = new Inventario();
+        inv.setId(dto.getId());
+        inv.setProductoId(dto.getProductoId());
+        inv.setStock(dto.getStock());
+
+        Inventario guardado = inventarioRepository.save(inv);
+        return convertirADTO(guardado);
+    }
+    private InventarioDTO convertirADTO(Inventario inv) {
+        InventarioDTO dto = new InventarioDTO();
+        dto.setId(inv.getId());
+        dto.setProductoId(inv.getProductoId());
+        dto.setStock(inv.getStock());
+        return dto;
     }
 
     //eliminar stock
