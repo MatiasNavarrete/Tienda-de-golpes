@@ -1,13 +1,11 @@
 package com.example.carrito.service;
 
-import com.example.carrito.dto.CarritoDTO;
-import com.example.carrito.dto.ItemCarritoDTO;
-import com.example.carrito.dto.ItemRequestDTO;
-import com.example.carrito.dto.ProductoResponse;
+import com.example.carrito.dto.*;
 import com.example.carrito.model.Carrito;
 import com.example.carrito.model.ItemCarrito;
 import com.example.carrito.repository.CarritoRepository;
 import com.example.carrito.repository.ItemCarritoRepository;
+import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -45,28 +43,33 @@ public class CarritoService {
         Carrito carrito = carritoRepository.findByUsuarioId(usuarioId)
                 .orElseGet(() -> carritoRepository.save(new Carrito(null, usuarioId, null)));
 
-        //validar que el producto existe en el otro servicio
-        ProductoResponse producto = webClient.get()
-                .uri("/api/v1/productos/{id}", request.getProductoId())
+        InventarioResponse inv = webClient.get()
+                .uri("http://localhost:9090/api/v1/inventario/{id}", request.getProductoId())
                 .retrieve()
-                .bodyToMono(ProductoResponse.class)
+                .bodyToMono(InventarioResponse.class)
                 .block();
+        int stockDisponible = (inv != null) ? inv.getStock() : 0;
 
-        if (producto == null) throw new RuntimeException("Producto no encontrado");
 
         //logica para controlar productos en carrito
-        ItemCarrito item = itemRepository.findByCarritoIdAndProductoId(carrito.getId(), request.getProductoId())
-                .map(i -> {
-                    //si existe, se actualiza la cantidad
-                    // "i" hace referencia a item existente, esta es una variable para métodos.
-                    i.setCantidad(i.getCantidad() + request.getCantidad());
-                    return itemRepository.save(i);
+        itemRepository.findByCarritoIdAndProductoId(carrito.getId(), request.getProductoId())
+                .map(itemExistente -> {
+                    int cantidadFinal = itemExistente.getCantidad() + request.getCantidad();
+                    //valida que la suma no supere el stock
+                    if (cantidadFinal > stockDisponible) {
+                        throw new RuntimeException("Stock insuficiente, solo quedan " + stockDisponible + " unidades.");
+                    }
+                    itemExistente.setCantidad(cantidadFinal);
+                    return itemRepository.save(itemExistente);
                 })
                 .orElseGet(() -> {
-                    //si no existe, creamos uno nuevo
-                    ItemCarrito nuevoItem = new ItemCarrito(null, carrito, request. getProductoId(), request.getCantidad());
-                    return itemRepository.save(nuevoItem);
-                });
+                //si es nuevo, se valida que la cantidad inicial no supere al stock
+                if (request.getCantidad() > stockDisponible) {
+                    throw new RuntimeException("Stock insuficiente, solo quedan " + stockDisponible + " unidades.");
+                }
+                ItemCarrito nuevoItem = new ItemCarrito(null, carrito, request.getProductoId(), request.getCantidad());
+                return itemRepository.save(nuevoItem);
+        });
 
         return obtenerCarrito(usuarioId);
     }
