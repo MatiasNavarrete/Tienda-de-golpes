@@ -1,11 +1,11 @@
 package com.example.carrito.service;
 
 import com.example.carrito.dto.*;
+import com.example.carrito.exception.StockInsuficienteException;
 import com.example.carrito.model.Carrito;
 import com.example.carrito.model.ItemCarrito;
 import com.example.carrito.repository.CarritoRepository;
 import com.example.carrito.repository.ItemCarritoRepository;
-import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -57,7 +57,7 @@ public class CarritoService {
                     int cantidadFinal = itemExistente.getCantidad() + request.getCantidad();
                     //valida que la suma no supere el stock
                     if (cantidadFinal > stockDisponible) {
-                        throw new RuntimeException("Stock insuficiente, solo quedan " + stockDisponible + " unidades.");
+                        throw new StockInsuficienteException("Stock insuficiente, solo quedan " + stockDisponible + " unidades.");
                     }
                     itemExistente.setCantidad(cantidadFinal);
                     return itemRepository.save(itemExistente);
