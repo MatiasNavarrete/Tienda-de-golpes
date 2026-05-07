@@ -31,14 +31,20 @@ public class InventarioService {
 
     //guardar o actualizar stock
     public InventarioDTO guardar(InventarioDTO dto) {
-        Inventario inv = new Inventario();
-        inv.setId(dto.getId());
-        inv.setProductoId(dto.getProductoId());
-        inv.setStock(dto.getStock());
 
-        Inventario guardado = inventarioRepository.save(inv);
+        //busca si existe un registro para ese productoId
+        Inventario inventario = inventarioRepository.findByProductoId(dto.getProductoId())
+                .orElse(new Inventario());// si no existe, creamos una instancia nueva de registro
+
+        //le da los valores (si ya existía, sobreescribe el stock)
+        inventario.setProductoId(dto.getProductoId());
+        inventario.setStock(dto.getStock());
+
+        Inventario guardado = inventarioRepository.save(inventario);
+
         return convertirADTO(guardado);
     }
+
     private InventarioDTO convertirADTO(Inventario inv) {
         InventarioDTO dto = new InventarioDTO();
         dto.setId(inv.getId());
