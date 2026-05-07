@@ -20,7 +20,7 @@ public class ProductoController {
 
     // obtener todos los productos
     @GetMapping
-    public List<Producto> listar() {
+    public List<ProductoDTO> listar() {
         return productoService.listarTodos();
     }
 
