@@ -1,6 +1,7 @@
 package com.example.carrito.service;
 
 import com.example.carrito.dto.*;
+import com.example.carrito.exception.ProductoNoEncontradoException;
 import com.example.carrito.exception.StockInsuficienteException;
 import com.example.carrito.model.Carrito;
 import com.example.carrito.model.ItemCarrito;
@@ -9,6 +10,7 @@ import com.example.carrito.repository.ItemCarritoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,6 +45,14 @@ public class CarritoService {
         Carrito carrito = carritoRepository.findByUsuarioId(usuarioId)
                 .orElseGet(() -> carritoRepository.save(new Carrito(null, usuarioId, null)));
 
+        ProductoResponse producto = webClient.get()
+                .uri("http://localhost:8080/api/v1/productos/{id}", request.getProductoId())
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError(), response ->
+                        Mono.error(new ProductoNoEncontradoException("El producto con ID " + request.getProductoId() + " no existe.")))
+                .bodyToMono(ProductoResponse.class)
+                .block();
+
         InventarioResponse inv = webClient.get()
                 .uri("http://localhost:9090/api/v1/inventario/{id}", request.getProductoId())
                 .retrieve()
@@ -65,7 +75,7 @@ public class CarritoService {
                 .orElseGet(() -> {
                 //si es nuevo, se valida que la cantidad inicial no supere al stock
                 if (request.getCantidad() > stockDisponible) {
-                    throw new RuntimeException("Stock insuficiente, solo quedan " + stockDisponible + " unidades.");
+                    throw new StockInsuficienteException("Stock insuficiente, solo quedan " + stockDisponible + " unidades.");
                 }
                 ItemCarrito nuevoItem = new ItemCarrito(null, carrito, request.getProductoId(), request.getCantidad());
                 return itemRepository.save(nuevoItem);
