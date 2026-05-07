@@ -1,7 +1,6 @@
 package com.example.inventario.controller;
 
-import com.example.dto.InventarioDTO;
-import com.example.inventario.model.Inventario;
+import com.example.inventario.dto.InventarioDTO;
 import com.example.inventario.service.InventarioService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

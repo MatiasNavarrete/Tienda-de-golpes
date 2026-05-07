@@ -1,6 +1,6 @@
 package com.example.inventario.service;
 
-import com.example.dto.InventarioDTO;
+import com.example.inventario.dto.InventarioDTO;
 import com.example.inventario.model.Inventario;
 import com.example.inventario.repository.InventarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
