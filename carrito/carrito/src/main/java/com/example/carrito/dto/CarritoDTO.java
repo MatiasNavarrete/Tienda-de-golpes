@@ -14,4 +14,8 @@ public class CarritoDTO {
     private String usuarioId;
     private List<ItemCarritoDTO> items;
 
+    //suma todos los subtotales de la lista de items
+    public int getTotalGeneral() {
+        return items != null ? items.stream().mapToInt(ItemCarritoDTO::getSubtotal).sum() : 0;
+    }
 }
