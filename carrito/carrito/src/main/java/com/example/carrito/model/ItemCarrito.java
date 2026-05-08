@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Table(name = "items_carrito")
@@ -18,6 +19,8 @@ public class ItemCarrito {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "carrito_id", nullable = false)
+    @ToString.Exclude
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Carrito carrito;
 
     @Column(name = "producto_id", nullable = false)
