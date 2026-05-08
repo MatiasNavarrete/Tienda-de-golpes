@@ -53,5 +53,11 @@ public class CarritoController {
         carritoService.eliminarProducto(usuarioId, productoId);
         return ResponseEntity.noContent().build(); // 204 No Content es lo estándar para eliminar
     }
+    //vaciar TODO el carrito del usuario
+    @DeleteMapping("/{usuarioId}")
+    public ResponseEntity<Void> vaciarCarrito(@PathVariable String usuarioId) {
+        carritoService.vaciarCarrito(usuarioId);
+        return ResponseEntity.noContent().build();
+    }
 
 }

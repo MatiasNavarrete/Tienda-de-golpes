@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.sql.SQLOutput;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,10 +55,11 @@ public class CarritoService {
                 .block();
 
         InventarioResponse inv = webClient.get()
-                .uri("http://localhost:9090/api/v1/inventario/{id}", request.getProductoId())
+                .uri("http://localhost:9090/api/v1/inventario/{productoId}", request.getProductoId())
                 .retrieve()
                 .bodyToMono(InventarioResponse.class)
                 .block();
+
         int stockDisponible = (inv != null) ? inv.getStock() : 0;
 
 
@@ -67,7 +69,10 @@ public class CarritoService {
                     int cantidadFinal = itemExistente.getCantidad() + request.getCantidad();
                     //valida que la suma no supere el stock
                     if (cantidadFinal > stockDisponible) {
-                        throw new StockInsuficienteException("Stock insuficiente, solo quedan " + stockDisponible + " unidades.");
+                        throw new StockInsuficienteException(
+                                String.format("Stock insuficiente. Ya tienes %d en el carrito, intentas sumar %d, pero el stock total es %d.",
+                                        itemExistente.getCantidad(), request.getCantidad(), stockDisponible)
+                        );
                     }
                     itemExistente.setCantidad(cantidadFinal);
                     return itemRepository.save(itemExistente);
@@ -122,5 +127,13 @@ public class CarritoService {
         // 3. Eliminamos el item
         itemRepository.delete(item);
 
+    }
+    public void vaciarCarrito(String usuarioId) {
+        // 1. Buscamos el carrito
+        Carrito carrito = carritoRepository.findByUsuarioId(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
+
+        List<ItemCarrito> items = itemRepository.findByCarritoId(carrito.getId());
+        itemRepository.deleteAll(items);
     }
 }
