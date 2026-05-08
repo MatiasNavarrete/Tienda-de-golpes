@@ -91,7 +91,7 @@ public class CarritoService {
 
     public CarritoDTO obtenerCarrito(String usuarioId) {
         Carrito carrito = carritoRepository.findByUsuarioId(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Carrito no encontrado"));
+                .orElseGet(() -> carritoRepository.save(new Carrito(null, usuarioId, null )));
 
         //usamos nuestro repositorio para trar solo los items de este carrito
         List<ItemCarrito> items = itemRepository.findByCarritoId(carrito.getId());
@@ -99,9 +99,11 @@ public class CarritoService {
         List<ItemCarritoDTO> itemDto =items.stream().map(item -> {
 
             ProductoResponse p = webClient.get()
-                    .uri("/api/v1/productos/{id}", item.getProductoId())
+                    .uri("http://localhost:8080/api/v1/productos/{id}", item.getProductoId())
                     .retrieve()
+                    .onStatus(status -> status.isError(), res -> Mono.empty())
                     .bodyToMono(ProductoResponse.class)
+                    .onErrorReturn(new ProductoResponse())
                     .block();
 
             return new ItemCarritoDTO(
