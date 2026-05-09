@@ -4,6 +4,7 @@ import com.example.producto.dto.InventarioResponse;
 import com.example.producto.dto.ProductoDTO;
 import com.example.producto.model.Producto;
 import com.example.producto.repository.ProductoRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -13,6 +14,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class ProductoService {
 
     @Autowired
@@ -22,14 +24,16 @@ public class ProductoService {
     private WebClient webClient;
 
     public List<ProductoDTO> listarTodos() {
+
+        log.info("Solicitando listado completo de productos");
         //traemos todos los productos de la BD
         List<Producto> productos = productoRepository.findAll();
-
         //convertimos la lista de Producto a ProductoDTO inyectando el stock
         return productos.stream().map(producto -> {
             Integer stock = 0;
             try {
-                // Consultamos el microservicio de inventario para cada producto
+                log.debug("Consultando stock para producto ID: {}", producto.getId());
+
                 InventarioResponse inventario = webClient.get()
                         .uri("/api/v1/inventario/{id}", producto.getId())
                         .retrieve()
@@ -40,9 +44,9 @@ public class ProductoService {
                     stock = inventario.getStock();
                 }
             } catch (Exception e) {
-                System.err.println(">>> [ERROR] No se pudo obtener stock para el producto " + producto.getId());
+                //log para exceptiones
+                log.error("No se pudo obtener el stock para el producto {}: {}", producto.getId(), e.getMessage());
             }
-
             //devolvemos el DTO con toda la info
             return new ProductoDTO(
                     producto.getId(),
@@ -55,13 +59,13 @@ public class ProductoService {
     }
 
     public Optional<ProductoDTO> buscarPorId(Long id){
-        System.out.println(">>> [DEBUG] Buscando producto en BD local con ID: " + id);
+        log.info("Buscando producto con ID: {}", id);
 
         Optional<Producto> productoOpt = productoRepository.findById(id);
 
         if (productoOpt.isPresent()) {
             Producto producto = productoOpt.get();
-            System.out.println(">>> [DEBUG] Producto encontrado. Consultando stock en inventario...");
+            log.debug("Producto {} encontrado en BD. Consultando inventario...", id);
 
             Integer stock= 0; //valor de stock por defecto
             try {
@@ -73,10 +77,10 @@ public class ProductoService {
 
                 if (inventario != null) {
                     stock = inventario.getStock();
-                    System.out.println(">>> [DEBUG] Respuesta recibida de Inventario: Stock = " + stock);
+                    log.debug("Stock obtenido para ID {}: {}", id, stock);
                 }
             } catch (Exception e) {
-                System.err.println(">>> [ERROR] Falló la comunicación con Inventario: " + e.getMessage());
+                log.error("Falló la comunicación con el microservicio de Inventario para ID {}:", id, e.getMessage());
             }
 
             //construimos el DTO combinando datos de BD y de inventario
@@ -90,13 +94,13 @@ public class ProductoService {
 
             return Optional.of(dto);
         } else {
-            System.out.println(">>> [DEBUG] Producto con ID " + id + " no existe en BD local.");
+            log.warn("Producto con ID {} no fue localizado en la base de datos", id);
             return Optional.empty();
         }
     }
 
     public ProductoDTO guardar(ProductoDTO dto){
-
+        log.info("Guardando/Actualizando producto: {}", dto.getNombre());
         //convierte DTO a entidad
         Producto producto = new Producto();
         producto.setId(dto.getId());
@@ -106,7 +110,7 @@ public class ProductoService {
 
         //se guarda en BD
         Producto guardado = productoRepository.save(producto);
-
+        log.debug("Producto guardado con éxito. ID generado: {}", guardado.getId());
         //consulta el stock real al servicio de inventario
         Integer stockActual = 0;
         try {
@@ -117,7 +121,7 @@ public class ProductoService {
                     .block();
             if (inv != null) stockActual = inv.getStock();
         } catch (Exception e) {
-            System.err.println("No se pudo obtener stock: " + e.getMessage());
+            log.error("Error al recuperar el stock tras ser guardado para ID {}: {}", guardado.getId(), e.getMessage());
         }
 
         return new ProductoDTO(
@@ -131,6 +135,8 @@ public class ProductoService {
     }
 
     public void eliminar(Long id){
+        log.info("Eliminando producto con ID: {}", id);
         productoRepository.deleteById(id);
+        log.debug("Producto con ID: {} eliminado correctamente", id);
     }
 }
