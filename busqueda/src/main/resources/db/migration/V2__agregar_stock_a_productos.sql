@@ -1,0 +1,1 @@
+ALTER TABLE productos_busqueda ADD COLUMN stock INT DEFAULT 0;
