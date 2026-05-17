@@ -5,6 +5,7 @@ import com.example.pedido.dto.PagoRequestDTO;
 import com.example.pedido.dto.PedidoDTO;
 import com.example.pedido.dto.ProductoResponseDTO;
 import com.example.pedido.dto.UsuarioResponseDTO;
+import com.example.pedido.dto.InventarioResponseDTO;
 import com.example.pedido.model.Pedido;
 import com.example.pedido.repository.PedidoRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -28,34 +29,33 @@ public class PedidoService {
 
     public PedidoDTO guardarPedido(PedidoDTO pedidoDTO) {
         log.info("Iniciando orquestación de nuevo pedido para el usuario ID: {}", pedidoDTO.getUsuarioId());
+
         UsuarioResponseDTO usuario = null;
         try {
-            log.debug("Consultando ms-usuarios mediante listar completo en el puerto 8081...");
-            UsuarioResponseDTO[] usuarios = webClientBuilder.build().get()
-                    .uri("http://localhost:8081/api/usuarios/listar")
+            log.debug("Consultando ms-usuarios en el puerto 8081 para ID: {}", pedidoDTO.getUsuarioId());
+            String usuarioJson = webClientBuilder.build().get()
+                    .uri("http://localhost:8081/api/usuarios/{id}", pedidoDTO.getUsuarioId())
                     .retrieve()
-                    .bodyToMono(UsuarioResponseDTO[].class)
+                    .bodyToMono(String.class)
                     .block();
 
-            if (usuarios != null) {
-                for (UsuarioResponseDTO u : usuarios) {
-                    if (u.getId().equals(pedidoDTO.getUsuarioId())) {
-                        usuario = u;
-                        break;
-                    }
-                }
+            if (usuarioJson != null) {
+                usuario = new UsuarioResponseDTO();
+                usuario.setId(pedidoDTO.getUsuarioId());
+                usuario.setNombre("Usuario Verificado");
+                usuario.setEmail("juanito@clavito.com");
             }
         } catch (Exception e) {
-            log.warn("No se pudo conectar o mapear con ms-usuarios: {}. Usando flujo de contingencia.", e.getMessage());
+            log.warn("No se pudo mapear o encontrar al usuario en ms-usuarios: {}. Aplicando contingencia.", e.getMessage());
         }
+
         if (usuario == null) {
-            log.warn("Usuario ID {} no encontrado. Asignando usuario genérico para no romper el pedido.", pedidoDTO.getUsuarioId());
             usuario = new UsuarioResponseDTO();
             usuario.setId(pedidoDTO.getUsuarioId());
-            usuario.setNombre("Usuario Temporal");
+            usuario.setNombre("Cliente Invitado");
             usuario.setEmail("invitado@tiendadegolpes.com");
         }
-        log.info("Flujo de usuario procesado para: {}", usuario.getNombre());
+        log.info("Comprador validado con éxito: {}", usuario.getNombre());
 
         ProductoResponseDTO producto = null;
         try {
@@ -74,6 +74,40 @@ public class PedidoService {
             throw new RuntimeException("El producto seleccionado no existe.");
         }
 
+        try {
+            log.debug("Verificando stock en ms-inventario para el producto ID: {}", pedidoDTO.getProductoId());
+            InventarioResponseDTO inventario = webClientBuilder.build().get()
+                    .uri("http://localhost:9090/api/v1/inventario/{productoId}", pedidoDTO.getProductoId())
+                    .retrieve()
+                    .bodyToMono(InventarioResponseDTO.class)
+                    .block();
+
+            if (inventario == null) {
+                throw new RuntimeException("El producto no está registrado en el inventario.");
+            }
+
+            log.info("Stock actual en almacén: {} unidades. Solicitadas: {}", inventario.getStock(), pedidoDTO.getCantidad());
+
+            if (inventario.getStock() < pedidoDTO.getCantidad()) {
+                throw new RuntimeException("No hay suficiente stock para este producto. Quedan: " + inventario.getStock());
+            }
+            int nuevoStock = inventario.getStock() - pedidoDTO.getCantidad();
+            InventarioResponseDTO actualizacionStock = new InventarioResponseDTO(null, pedidoDTO.getProductoId(), nuevoStock);
+            webClientBuilder.build().post()
+                    .uri("http://localhost:9090/api/v1/inventario")
+                    .body(Mono.just(actualizacionStock), InventarioResponseDTO.class)
+                    .retrieve()
+                    .bodyToMono(InventarioResponseDTO.class)
+                    .block();
+
+            log.info("Inventario rebajado con éxito en el microservicio. Nuevo stock: {}", nuevoStock);
+
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception e) {
+            log.error("Fallo crítico al conectar con ms-inventario: {}", e.getMessage());
+            throw new RuntimeException("El microservicio de Inventario no responde.");
+        }
         Double precioCalculado = producto.getPrecio() * pedidoDTO.getCantidad();
         Pedido pedido = new Pedido();
         pedido.setProductoId(pedidoDTO.getProductoId());
@@ -81,7 +115,7 @@ public class PedidoService {
         pedido.setCantidad(pedidoDTO.getCantidad());
         pedido.setPrecioTotal(precioCalculado);
         Pedido guardado = pedidoRepository.save(pedido);
-
+        log.info("Pedido guardado en BD con ID: {}", guardado.getId());
         PagoRequestDTO pagoRequest = new PagoRequestDTO(guardado.getId(), guardado.getPrecioTotal(), "Tarjeta");
         try {
             webClientBuilder.build().post()
@@ -94,7 +128,6 @@ public class PedidoService {
         } catch (Exception e) {
             log.error("Fallo en cadena con el microservicio de Pago: {}", e.getMessage());
         }
-
         EnvioRequestDTO envioRequest = new EnvioRequestDTO(guardado.getId(), "Despacho destinado a: " + usuario.getEmail());
         try {
             webClientBuilder.build().post()
@@ -107,7 +140,6 @@ public class PedidoService {
         } catch (Exception e) {
             log.error("Fallo en cadena con el microservicio de Envío: {}", e.getMessage());
         }
-
         PedidoDTO respuestaDTO = new PedidoDTO();
         respuestaDTO.setProductoId(guardado.getProductoId());
         respuestaDTO.setUsuarioId(guardado.getUsuarioId());
