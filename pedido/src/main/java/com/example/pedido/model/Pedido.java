@@ -20,7 +20,9 @@ public class Pedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long usuarioId;
     private Long productoId;
     private Integer cantidad;
     private Double precioTotal;
+
 }

@@ -1,6 +1,7 @@
 CREATE TABLE pedidos (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    producto_id VARCHAR(255),
-    cantidad INT,
-    precio_total DOUBLE
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    producto_id BIGINT NOT NULL,
+    usuario_id BIGINT NOT NULL,
+    cantidad INT NOT NULL,
+    precio_total DOUBLE NOT NULL
 );

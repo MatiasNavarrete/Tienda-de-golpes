@@ -8,7 +8,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PedidoDTO {
-    private Long productoId;
+    private Long productoId;//vinculado al producto
+    private Long usuarioId; //vinculado al usuario que hace la compra
     private Integer cantidad;
     private Double precioTotal;
 }
