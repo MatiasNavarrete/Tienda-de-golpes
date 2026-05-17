@@ -23,15 +23,18 @@ public class ResenaService {
     private WebClient.Builder webClientBuilder;
 
     public Resena crearResena(ResenaDTO dto) {
-        log.info("Verificando si el pedido ID: {} existe...", dto.getPedidoId());
+        log.info("Verificando existencia del pedido ID: {} en ms-pedido...", dto.getPedidoId());
 
         try {
-            String respuestaPedido = webClientBuilder.build().get()
-                    .uri("http://localhost:8086/api/pedidos/listar")
+
+            webClientBuilder.build().get()
+                    .uri("http://localhost:8086/api/pedidos/{id}", dto.getPedidoId())
                     .retrieve()
-                    .bodyToMono(String.class)
+                    .toBodilessEntity()
                     .block();
-            log.info("Comunicación exitosa. Guardando reseña...");
+
+            log.info("Pedido verificado con éxito en el sistema. Procediendo a guardar la reseña.");
+
             Resena nuevaResena = new Resena();
             nuevaResena.setPedidoId(dto.getPedidoId());
             nuevaResena.setComentario(dto.getComentario());
@@ -42,8 +45,8 @@ public class ResenaService {
             return guardada;
 
         } catch (Exception e) {
-            log.error("Fallo de comunicación: El Pedido no está respondiendo o el ID no existe.");
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No se pudo verificar el pedido.");
+            log.error("Validación fallida: El Pedido ID {} no existe en la base de datos o ms-pedido está apagado.", dto.getPedidoId());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No se puede dejar una reseña: El ID de pedido no existe.");
         }
     }
     public List<Resena> listarTodas() {
