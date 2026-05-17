@@ -8,7 +8,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PedidoDTO {
+public class CarritoResponseDTO {
+    private Long id;
     private String usuarioId;
-    private Double precioTotal;
+    private List<ItemCarritoDTO> items;
 }

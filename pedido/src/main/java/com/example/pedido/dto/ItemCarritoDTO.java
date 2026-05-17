@@ -3,12 +3,13 @@ package com.example.pedido.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PedidoDTO {
-    private String usuarioId;
-    private Double precioTotal;
+public class ItemCarritoDTO {
+    private Long productoId;
+    private String nombre;
+    private int precio;
+    private Integer cantidad;
 }

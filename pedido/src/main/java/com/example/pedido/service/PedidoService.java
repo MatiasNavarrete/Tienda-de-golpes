@@ -1,11 +1,6 @@
 package com.example.pedido.service;
 
-import com.example.pedido.dto.EnvioRequestDTO;
-import com.example.pedido.dto.PagoRequestDTO;
-import com.example.pedido.dto.PedidoDTO;
-import com.example.pedido.dto.ProductoResponseDTO;
-import com.example.pedido.dto.UsuarioResponseDTO;
-import com.example.pedido.dto.InventarioResponseDTO;
+import com.example.pedido.dto.*;
 import com.example.pedido.model.Pedido;
 import com.example.pedido.repository.PedidoRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,114 +17,112 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PedidoService {
 
-    @Autowired
-    private PedidoRepository pedidoRepository;
-
-    @Autowired
-    private WebClient.Builder webClientBuilder;
+    @Autowired private PedidoRepository pedidoRepository;
+    @Autowired private WebClient.Builder webClientBuilder;
+    @Autowired private JdbcTemplate jdbcTemplate;
 
     public PedidoDTO guardarPedido(PedidoDTO pedidoDTO) {
-        log.info("Iniciando orquestación de nuevo pedido para el usuario ID: {}", pedidoDTO.getUsuarioId());
+        log.info("Iniciando procesamiento de compra de Carrito para el usuario: {}", pedidoDTO.getUsuarioId());
 
-        UsuarioResponseDTO usuario = null;
+        CarritoResponseDTO carrito = null;
         try {
-            log.debug("Consultando ms-usuarios en el puerto 8081 para ID: {}", pedidoDTO.getUsuarioId());
-            String usuarioJson = webClientBuilder.build().get()
-                    .uri("http://localhost:8081/api/usuarios/{id}", pedidoDTO.getUsuarioId())
+            carrito = webClientBuilder.build().get()
+                    .uri("http://localhost:8082/api/v1/carrito/{usuarioId}", pedidoDTO.getUsuarioId()) // Cambiado a 8082
                     .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-
-            if (usuarioJson != null) {
-                usuario = new UsuarioResponseDTO();
-                usuario.setId(pedidoDTO.getUsuarioId());
-                usuario.setNombre("Usuario Verificado");
-                usuario.setEmail("juanito@clavito.com");
-            }
-        } catch (Exception e) {
-            log.warn("No se pudo mapear o encontrar al usuario en ms-usuarios: {}. Aplicando contingencia.", e.getMessage());
-        }
-
-        if (usuario == null) {
-            usuario = new UsuarioResponseDTO();
-            usuario.setId(pedidoDTO.getUsuarioId());
-            usuario.setNombre("Cliente Invitado");
-            usuario.setEmail("invitado@tiendadegolpes.com");
-        }
-        log.info("Comprador validado con éxito: {}", usuario.getNombre());
-
-        ProductoResponseDTO producto = null;
-        try {
-            log.debug("Consultando ms-productos para el producto ID: {}", pedidoDTO.getProductoId());
-            producto = webClientBuilder.build().get()
-                    .uri("http://localhost:8080/api/v1/productos/{id}", pedidoDTO.getProductoId())
-                    .retrieve()
-                    .bodyToMono(ProductoResponseDTO.class)
+                    .bodyToMono(CarritoResponseDTO.class)
                     .block();
         } catch (Exception e) {
-            log.error("Error de comunicación con ms-productos: {}", e.getMessage());
-            throw new RuntimeException("El microservicio de Productos no responde.");
+            log.error("Error al conectar con ms-carrito: {}", e.getMessage());
+            throw new RuntimeException("El microservicio de Carrito no responde.");
         }
 
-        if (producto == null) {
-            throw new RuntimeException("El producto seleccionado no existe.");
+        if (carrito == null || carrito.getItems() == null || carrito.getItems().isEmpty()) {
+            throw new RuntimeException("El carrito del usuario está vacío. No hay productos para comprar.");
         }
 
-        try {
-            log.debug("Verificando stock en ms-inventario para el producto ID: {}", pedidoDTO.getProductoId());
-            InventarioResponseDTO inventario = webClientBuilder.build().get()
-                    .uri("http://localhost:9090/api/v1/inventario/{productoId}", pedidoDTO.getProductoId())
-                    .retrieve()
-                    .bodyToMono(InventarioResponseDTO.class)
-                    .block();
+        log.info("Carrito recuperado con {} productos diferentes.", carrito.getItems().size());
 
-            if (inventario == null) {
-                throw new RuntimeException("El producto no está registrado en el inventario.");
+        double granTotalAcumulado = 0.0;
+
+        for (ItemCarritoDTO item : carrito.getItems()) {
+            try {
+                // Consultamos el stock actual de este producto específico
+                InventarioResponseDTO inv = webClientBuilder.build().get()
+                        .uri("http://localhost:9090/api/v1/inventario/{productoId}", item.getProductoId())
+                        .retrieve()
+                        .bodyToMono(InventarioResponseDTO.class)
+                        .block();
+
+                if (inv == null || inv.getStock() < item.getCantidad()) {
+                    throw new RuntimeException("Stock insuficiente para el producto: " + item.getNombre() + ". Quedan solo: " + (inv != null ? inv.getStock() : 0));
+                }
+
+                granTotalAcumulado += item.getPrecio() * item.getCantidad();
+
+            } catch (RuntimeException re) {
+                throw re;
+            } catch (Exception e) {
+                log.error("Error al verificar inventario para producto ID {}: {}", item.getProductoId(), e.getMessage());
+                throw new RuntimeException("Error de red con ms-inventario.");
             }
-
-            log.info("Stock actual en almacén: {} unidades. Solicitadas: {}", inventario.getStock(), pedidoDTO.getCantidad());
-
-            if (inventario.getStock() < pedidoDTO.getCantidad()) {
-                throw new RuntimeException("No hay suficiente stock para este producto. Quedan: " + inventario.getStock());
-            }
-            int nuevoStock = inventario.getStock() - pedidoDTO.getCantidad();
-            InventarioResponseDTO actualizacionStock = new InventarioResponseDTO(null, pedidoDTO.getProductoId(), nuevoStock);
-            webClientBuilder.build().post()
-                    .uri("http://localhost:9090/api/v1/inventario")
-                    .body(Mono.just(actualizacionStock), InventarioResponseDTO.class)
-                    .retrieve()
-                    .bodyToMono(InventarioResponseDTO.class)
-                    .block();
-
-            log.info("Inventario rebajado con éxito en el microservicio. Nuevo stock: {}", nuevoStock);
-
-        } catch (RuntimeException re) {
-            throw re;
-        } catch (Exception e) {
-            log.error("Fallo crítico al conectar con ms-inventario: {}", e.getMessage());
-            throw new RuntimeException("El microservicio de Inventario no responde.");
         }
-        Double precioCalculado = producto.getPrecio() * pedidoDTO.getCantidad();
+
+        for (ItemCarritoDTO item : carrito.getItems()) {
+            try {
+                InventarioResponseDTO inv = webClientBuilder.build().get()
+                        .uri("http://localhost:9090/api/v1/inventario/{productoId}", item.getProductoId())
+                        .retrieve()
+                        .bodyToMono(InventarioResponseDTO.class)
+                        .block();
+
+                int nuevoStock = inv.getStock() - item.getCantidad();
+                InventarioResponseDTO actualizacion = new InventarioResponseDTO(null, item.getProductoId(), nuevoStock);
+
+                webClientBuilder.build().post()
+                        .uri("http://localhost:9090/api/v1/inventario")
+                        .body(Mono.just(actualizacion), InventarioResponseDTO.class)
+                        .retrieve()
+                        .bodyToMono(InventarioResponseDTO.class)
+                        .block();
+            } catch (Exception e) {
+                log.error("Fallo al descontar stock físico: {}", e.getMessage());
+            }
+        }
+
         Pedido pedido = new Pedido();
-        pedido.setProductoId(pedidoDTO.getProductoId());
         pedido.setUsuarioId(pedidoDTO.getUsuarioId());
-        pedido.setCantidad(pedidoDTO.getCantidad());
-        pedido.setPrecioTotal(precioCalculado);
+        pedido.setPrecioTotal(granTotalAcumulado);
         Pedido guardado = pedidoRepository.save(pedido);
-        log.info("Pedido guardado en BD con ID: {}", guardado.getId());
+
+        for (ItemCarritoDTO item : carrito.getItems()) {
+            jdbcTemplate.update(
+                    "INSERT INTO pedido_detalles (pedido_id, producto_id, cantidad) VALUES (?, ?, ?)",
+                    guardado.getId(), item.getProductoId(), item.getCantidad()
+            );
+        }
+        log.info("Pedido guardado con éxito. ID Boleta: {}. Total: ${}", guardado.getId(), granTotalAcumulado);
+
+        try {
+            webClientBuilder.build().delete()
+                    .uri("http://localhost:8081/api/v1/carrito/{usuarioId}", pedidoDTO.getUsuarioId())
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+            log.info("Carrito del usuario {} vaciado de forma exitosa tras la compra.", pedidoDTO.getUsuarioId());
+        } catch (Exception e) {
+            log.error("No se pudo vaciar el carrito en ms-carrito: {}", e.getMessage());
+        }
+
         PagoRequestDTO pagoRequest = new PagoRequestDTO(guardado.getId(), guardado.getPrecioTotal(), "Tarjeta");
         try {
-            webClientBuilder.build().post()
-                    .uri("http://localhost:8085/api/pagos/procesar")
-                    .body(Mono.just(pagoRequest), PagoRequestDTO.class)
+            webClientBuilder.build().delete()
+                    .uri("http://localhost:8082/api/v1/carrito/{usuarioId}", pedidoDTO.getUsuarioId()) //camvio de puerto a 8082
                     .retrieve()
-                    .bodyToMono(String.class)
+                    .toBodilessEntity()
                     .block();
-            log.info("Pago aprobado para el pedido ID: {}", guardado.getId());
-        } catch (Exception e) {
-            log.error("Fallo en cadena con el microservicio de Pago: {}", e.getMessage());
-        }
-        EnvioRequestDTO envioRequest = new EnvioRequestDTO(guardado.getId(), "Despacho destinado a: " + usuario.getEmail());
+        } catch (Exception e) { log.error("Fallo con ms-pagos: {}", e.getMessage()); }
+
+        EnvioRequestDTO envioRequest = new EnvioRequestDTO(guardado.getId(), "Despacho procesado para el usuario: " + pedidoDTO.getUsuarioId());
         try {
             webClientBuilder.build().post()
                     .uri("http://localhost:8084/api/envios/crear")
@@ -136,29 +130,16 @@ public class PedidoService {
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
-            log.info("Orden de envío generada dinámicamente.");
-        } catch (Exception e) {
-            log.error("Fallo en cadena con el microservicio de Envío: {}", e.getMessage());
-        }
-        PedidoDTO respuestaDTO = new PedidoDTO();
-        respuestaDTO.setProductoId(guardado.getProductoId());
-        respuestaDTO.setUsuarioId(guardado.getUsuarioId());
-        respuestaDTO.setCantidad(guardado.getCantidad());
-        respuestaDTO.setPrecioTotal(guardado.getPrecioTotal());
+        } catch (Exception e) { log.error("Fallo con ms-envios: {}", e.getMessage()); }
 
-        return respuestaDTO;
+        PedidoDTO respuesta = new PedidoDTO();
+        respuesta.setUsuarioId(guardado.getUsuarioId());
+        respuesta.setPrecioTotal(guardado.getPrecioTotal());
+        return respuesta;
     }
-
     public List<PedidoDTO> obtenerTodos() {
         return pedidoRepository.findAll().stream()
-                .map(pedido -> {
-                    PedidoDTO dto = new PedidoDTO();
-                    dto.setProductoId(pedido.getProductoId());
-                    dto.setUsuarioId(pedido.getUsuarioId());
-                    dto.setCantidad(pedido.getCantidad());
-                    dto.setPrecioTotal(pedido.getPrecioTotal());
-                    return dto;
-                })
+                .map(p -> new PedidoDTO(p.getUsuarioId(), p.getPrecioTotal()))
                 .collect(Collectors.toList());
     }
 }
