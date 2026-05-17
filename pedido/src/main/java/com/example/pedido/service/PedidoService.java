@@ -169,4 +169,9 @@ public class PedidoService {
                 .collect(Collectors.toList());
 
     }
+    public PedidoDTO obtenerPorId(Long id) {
+        return pedidoRepository.findById(id)
+                .map(p -> new PedidoDTO(p.getUsuarioId(), p.getPrecioTotal()))
+                .orElse(null);
+    }
 }
