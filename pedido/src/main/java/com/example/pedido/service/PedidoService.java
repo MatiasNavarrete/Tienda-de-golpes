@@ -46,7 +46,6 @@ public class PedidoService {
 
         for (ItemCarritoDTO item : carrito.getItems()) {
             try {
-                // Consultamos el stock actual de este producto específico
                 InventarioResponseDTO inv = webClientBuilder.build().get()
                         .uri("http://localhost:9090/api/v1/inventario/{productoId}", item.getProductoId())
                         .retrieve()
@@ -104,7 +103,7 @@ public class PedidoService {
 
         try {
             webClientBuilder.build().delete()
-                    .uri("http://localhost:8081/api/v1/carrito/{usuarioId}", pedidoDTO.getUsuarioId())
+                    .uri("http://localhost:8082/api/v1/carrito/{usuarioId}", pedidoDTO.getUsuarioId())
                     .retrieve()
                     .toBodilessEntity()
                     .block();
@@ -115,12 +114,16 @@ public class PedidoService {
 
         PagoRequestDTO pagoRequest = new PagoRequestDTO(guardado.getId(), guardado.getPrecioTotal(), "Tarjeta");
         try {
-            webClientBuilder.build().delete()
-                    .uri("http://localhost:8082/api/v1/carrito/{usuarioId}", pedidoDTO.getUsuarioId()) //camvio de puerto a 8082
+            webClientBuilder.build().post()
+                    .uri("http://localhost:8085/api/pagos/procesar")
+                    .body(Mono.just(pagoRequest), PagoRequestDTO.class)
                     .retrieve()
-                    .toBodilessEntity()
+                    .bodyToMono(String.class)
                     .block();
-        } catch (Exception e) { log.error("Fallo con ms-pagos: {}", e.getMessage()); }
+            log.info("Pago aprobado para el pedido ID: {}", guardado.getId());
+        } catch (Exception e) {
+            log.error("Fallo con pagos: {}", e.getMessage());
+        }
 
         EnvioRequestDTO envioRequest = new EnvioRequestDTO(guardado.getId(), "Despacho procesado para el usuario: " + pedidoDTO.getUsuarioId());
         try {
@@ -130,16 +133,40 @@ public class PedidoService {
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
-        } catch (Exception e) { log.error("Fallo con ms-envios: {}", e.getMessage()); }
+            log.info("Orden de envío generada dinámicamente.");
+        } catch (Exception e) {
+            log.error("Fallo con ms-envios: {}", e.getMessage());
+        }
 
+        String mensajeAlerta = "Hola Tu compra por un total de $" + guardado.getPrecioTotal() +
+                " ha sido procesada con éxito. ID de Boleta: " + guardado.getId();
+
+        NotificacionRequestDTO notificacionRequest = new NotificacionRequestDTO(
+                pedidoDTO.getUsuarioId(),
+                "Confirmación de Compra - Tienda de Golpes",
+                mensajeAlerta
+        );
+        try {
+            webClientBuilder.build().post()
+                    .uri("http://localhost:8083/api/notificaciones")
+                    .body(Mono.just(notificacionRequest), NotificacionRequestDTO.class)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+            log.info("Alerta de compra enviada con éxito a Notificaciones.");
+        } catch (Exception e) {
+            log.error("No se pudo conectar con notificaciones: {}", e.getMessage());
+        }
         PedidoDTO respuesta = new PedidoDTO();
         respuesta.setUsuarioId(guardado.getUsuarioId());
         respuesta.setPrecioTotal(guardado.getPrecioTotal());
         return respuesta;
     }
+
     public List<PedidoDTO> obtenerTodos() {
         return pedidoRepository.findAll().stream()
                 .map(p -> new PedidoDTO(p.getUsuarioId(), p.getPrecioTotal()))
                 .collect(Collectors.toList());
+
     }
 }
