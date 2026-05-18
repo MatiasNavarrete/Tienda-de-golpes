@@ -1,6 +1,6 @@
 # 🛒 Tienda de Golpes - Arquitectura de Microservicios
 
-Ecosistema distribuido y escalable desarrollado en *Java 21* con *Spring Boot, diseñado bajo un patrón de arquitectura limpia y comunicación asrónica/sincrónica entre servicios. Las bases de datos se gestionan de forma independiente mediante **Flyway Migrations*.
+Ecosistema distribuido y escalable desarrollado en *Java 21* con *Spring Boot*, diseñado bajo un patrón de arquitectura limpia y comunicación asrónica/sincrónica entre servicios. Las bases de datos se gestionan de forma independiente mediante **Flyway Migrations*.
 
 ---
 
