@@ -5,8 +5,9 @@ Ecosistema distribuido y escalable desarrollado en *Java 24* con *Spring Boot 4.
 ---
 
 ## 👥 Integrantes del Proyecto
-* *Alexander Campos* (Desarrollador de Pedidos y Reseñas)
+* *Alexander Campos* (Desarrollador de Pedidos, Pagos, Envios y Reseñas)
 * *Matías Navarrete* (Desarrollador de Usuarios, Notificaciones y Búsqueda)
+* *Jose Romero* (Desarrollador de Productos, Inventario y Carrito)
 
 ---
 
