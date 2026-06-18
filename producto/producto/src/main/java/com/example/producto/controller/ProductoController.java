@@ -2,6 +2,11 @@ package com.example.producto.controller;
 
 import com.example.producto.dto.ProductoDTO;
 import com.example.producto.service.ProductoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,19 +19,30 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/productos")
 @Slf4j
+@Tag(name = "Producto Controller", description = "Endpoints para la gestión del catálogo de productos") // Adaptado de la guía
+@SecurityRequirement(name = "bearerAuth")
 public class ProductoController {
 
     @Autowired
     private ProductoService productoService;
 
-    // obtener todos los productos
+    @Operation(summary = "Listar todos los productos", description = "Recupera todos los productos registrados en el catálogo general.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de productos obtenida con éxito"),
+            @ApiResponse(responseCode = "401", description = "No autenticado")
+    })
     @GetMapping
     public List<ProductoDTO> listar() {
         log.info("Petición GET recibida lista para listar todos los productos");
         return productoService.listarTodos();
     }
 
-    // obtener un producto por ID
+    @Operation(summary = "Obtener producto por ID", description = "Busca un producto específico utilizando su identificador único.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Producto encontrado con éxito"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+    @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ProductoDTO> obtenerPorId(@PathVariable Long id) {
         log.info("Petición Get recibida para obtener producto con ID: {}", id);
@@ -41,7 +57,12 @@ public class ProductoController {
                 });
     }
 
-    // crear un nuevo producto
+    @Operation(summary = "Crear un nuevo producto", description = "Registra un nuevo artículo en el catálogo de la tienda.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Producto creado correctamente"),
+    @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+    @ApiResponse(responseCode = "401", description = "No autenticado")
+    })
     @PostMapping
     public ResponseEntity<ProductoDTO> crear(@Valid @RequestBody ProductoDTO productoDTO) {
         log.info("Petición POST recibida para crear un nuevo producto: {}", productoDTO.getNombre());
@@ -50,7 +71,13 @@ public class ProductoController {
         return new ResponseEntity<>(guardado, HttpStatus.CREATED);
     }
 
-    // actualizar un producto
+    @Operation(summary = "Actualizar un producto", description = "Modifica los datos de un producto existente basándose en su ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Producto actualizado correctamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de actualización inválidos"),
+    @ApiResponse(responseCode = "401", description = "No autenticado"),
+    @ApiResponse(responseCode = "404", description = "Producto no encontrado para actualizar")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<ProductoDTO> actualizar(@PathVariable Long id, @Valid @RequestBody ProductoDTO productoDTO) {
         log.info("Petición PUT recibida para actualizar producto con ID: {}", id);
@@ -67,7 +94,12 @@ public class ProductoController {
                 });
     }
 
-    // eliminar un producto
+    @Operation(summary = "Eliminar un producto", description = "Remueve permanentemente un producto del catálogo del sistema.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Producto eliminado correctamente"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+    @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         log.info("Petición DELETE recibida para eliminar producto con ID: {}", id);
