@@ -1,5 +1,6 @@
 package com.example.producto.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import com.example.producto.dto.ProductoDTO;
 import com.example.producto.service.ProductoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/productos")
@@ -34,7 +36,15 @@ public class ProductoController {
     @GetMapping
     public List<ProductoDTO> listar() {
         log.info("Petición GET recibida lista para listar todos los productos");
-        return productoService.listarTodos();
+        return productoService.listarTodos().stream()
+                .map(producto -> {
+                    Long id = producto.getId();
+                    producto.add(linkTo(methodOn(ProductoController.class).obtenerPorId(id)).withSelfRel());
+                    producto.add(linkTo(methodOn(ProductoController.class).actualizar(id, producto)).withRel("update"));
+                    producto.add(linkTo(methodOn(ProductoController.class).eliminar(id)).withRel("delete"));
+                    return producto;
+                })
+                .collect(Collectors.toList());
     }
 
     @Operation(summary = "Obtener producto por ID", description = "Busca un producto específico utilizando su identificador único.")
@@ -48,6 +58,11 @@ public class ProductoController {
         log.info("Petición Get recibida para obtener producto con ID: {}", id);
         return productoService.buscarPorId(id)
                 .map(producto -> {
+                    producto.add(linkTo(methodOn(ProductoController.class).obtenerPorId(id)).withSelfRel());
+                    producto.add(linkTo(methodOn(ProductoController.class).listar()).withRel("todos"));
+                    producto.add(linkTo(methodOn(ProductoController.class).actualizar(id, producto)).withRel("update"));
+                    producto.add(linkTo(methodOn(ProductoController.class).eliminar(id)).withRel("delete"));
+
                     log.debug("Producto con ID {} encontrado exitosamente", id);
                     return new ResponseEntity<>(producto, HttpStatus.OK);
                 })
@@ -60,13 +75,19 @@ public class ProductoController {
     @Operation(summary = "Crear un nuevo producto", description = "Registra un nuevo artículo en el catálogo de la tienda.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Producto creado correctamente"),
-    @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
-    @ApiResponse(responseCode = "401", description = "No autenticado")
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado")
     })
     @PostMapping
     public ResponseEntity<ProductoDTO> crear(@Valid @RequestBody ProductoDTO productoDTO) {
         log.info("Petición POST recibida para crear un nuevo producto: {}", productoDTO.getNombre());
         ProductoDTO guardado = productoService.guardar(productoDTO);
+
+        guardado.add(linkTo(methodOn(ProductoController.class).listar()).withRel("todos"));
+        guardado.add(linkTo(methodOn(ProductoController.class).obtenerPorId(guardado.getId())).withSelfRel());
+        guardado.add(linkTo(methodOn(ProductoController.class).actualizar(guardado.getId(), guardado)).withRel("update"));
+        guardado.add(linkTo(methodOn(ProductoController.class).eliminar(guardado.getId())).withRel("delete"));
+
         log.debug("Producto creado con éxito. ID asignado: {}", guardado.getId());
         return new ResponseEntity<>(guardado, HttpStatus.CREATED);
     }
@@ -75,8 +96,8 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Producto actualizado correctamente"),
             @ApiResponse(responseCode = "400", description = "Datos de actualización inválidos"),
-    @ApiResponse(responseCode = "401", description = "No autenticado"),
-    @ApiResponse(responseCode = "404", description = "Producto no encontrado para actualizar")
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "404", description = "Producto no encontrado para actualizar")
     })
     @PutMapping("/{id}")
     public ResponseEntity<ProductoDTO> actualizar(@PathVariable Long id, @Valid @RequestBody ProductoDTO productoDTO) {
@@ -85,6 +106,10 @@ public class ProductoController {
                 .map(p -> {
                     productoDTO.setId(id);
                     ProductoDTO actualizado = productoService.guardar(productoDTO);
+                    actualizado.add(linkTo(methodOn(ProductoController.class).listar()).withRel("todos"));
+                    actualizado.add(linkTo(methodOn(ProductoController.class).obtenerPorId(actualizado.getId())).withSelfRel());
+                    actualizado.add(linkTo(methodOn(ProductoController.class).eliminar(actualizado.getId())).withRel("delete"));
+
                     log.debug("Producto con ID {} actualizado correctamente", id);
                     return new ResponseEntity<>(actualizado, HttpStatus.OK);
                 })
@@ -98,7 +123,7 @@ public class ProductoController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Producto eliminado correctamente"),
             @ApiResponse(responseCode = "401", description = "No autenticado"),
-    @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+            @ApiResponse(responseCode = "404", description = "Producto no encontrado")
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
