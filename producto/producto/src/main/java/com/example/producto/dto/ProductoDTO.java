@@ -1,18 +1,20 @@
 package com.example.producto.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.hateoas.RepresentationModel;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "Estructura de datos que representa a un producto comercial de la tienda")
-public class ProductoDTO {
+public class ProductoDTO extends RepresentationModel<ProductoDTO> {
 
     @Schema(description = "Identificador único del producto", example = "7", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
