@@ -4,10 +4,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.springframework.hateoas.RepresentationModel;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "Estructura de datos que representa el control de existencias de un producto en almacén")
-public class InventarioDTO {
+public class InventarioDTO extends RepresentationModel<InventarioDTO> {
 
     @Schema(description = "Identificador único del registro de inventario", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;

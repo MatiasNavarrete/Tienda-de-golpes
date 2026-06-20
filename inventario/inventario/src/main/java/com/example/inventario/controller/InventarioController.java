@@ -1,5 +1,6 @@
 package com.example.inventario.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import com.example.inventario.dto.InventarioDTO;
 import com.example.inventario.service.InventarioService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/inventario")
@@ -37,6 +39,10 @@ public class InventarioController {
         log.info("Petición GET recibida para consultar stock del producto ID: {}", productoId);
         return inventarioService.obtenerPorProductoId(productoId)
                 .map(dto -> {
+
+                    dto.add(linkTo(methodOn(InventarioController.class).obtenerPorProductoId(dto.getProductoId())).withSelfRel());
+                    dto.add(linkTo(methodOn(InventarioController.class).listarTodos()).withRel("todos"));
+
                     log.debug("Respuesta exitosa: Stock disponible para producto {}: {}", productoId, dto.getStock());
                     return ResponseEntity.ok(dto);
                 })
@@ -54,7 +60,12 @@ public class InventarioController {
     @GetMapping
     public List<InventarioDTO> listarTodos() {
         log.info("Petición GET recibida para listar todo el inventario");
-        return inventarioService.listarTodos();
+        return inventarioService.listarTodos().stream()
+                .map(dto -> {
+                    dto.add(linkTo(methodOn(InventarioController.class).obtenerPorProductoId(dto.getProductoId())).withSelfRel());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     @Operation(summary = "Guardar o actualizar registro de stock", description = "Crea un nuevo registro de almacén o actualiza las existencias disponibles para un producto específico.")
@@ -67,6 +78,10 @@ public class InventarioController {
     public ResponseEntity<InventarioDTO> crear(@Valid @RequestBody InventarioDTO inventarioDTO) {
         log.info("Petición POST recibida para actualizar/crear stock del producto ID: {}", inventarioDTO.getProductoId());
         InventarioDTO guardado = inventarioService.guardar(inventarioDTO);
+
+        guardado.add(linkTo(methodOn(InventarioController.class).obtenerPorProductoId(guardado.getProductoId())).withSelfRel());
+        guardado.add(linkTo(methodOn(InventarioController.class).listarTodos()).withRel("todos"));
+
         log.debug("Stock registrado correctamente para ID: {}", guardado.getProductoId());
         return new ResponseEntity<>(guardado, HttpStatus.CREATED);
     }
