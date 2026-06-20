@@ -3,15 +3,18 @@ package com.example.carrito.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.hateoas.RepresentationModel;
 
 import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "Respuesta estructurada que representa el estado completo del carrito de un usuario")
-public class CarritoDTO {
+public class CarritoDTO extends RepresentationModel<CarritoDTO> {
 
     @Schema(
             description = "Identificador único de la entidad Carrito en la base de datos",

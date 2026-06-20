@@ -1,5 +1,6 @@
 package com.example.carrito.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import com.example.carrito.dto.CarritoDTO;
 import com.example.carrito.dto.ItemRequestDTO;
 import com.example.carrito.service.CarritoService;
@@ -42,6 +43,10 @@ public class CarritoController {
 
         log.info("Petición PATCH recibida: Reducir {} unidades del producto {} para usuario {}", cantidad, productoId, usuarioId);
         CarritoDTO carrito = carritoService.reducirProducto(usuarioId, productoId, cantidad);
+
+        carrito.add(linkTo(methodOn(CarritoController.class).obtenerCarrito(carrito.getUsuarioId())).withSelfRel());
+        carrito.add(linkTo(methodOn(CarritoController.class).vaciarCarrito(carrito.getUsuarioId())).withRel("vaciar"));
+
         log.debug("Reducción completada con éxito para usuario {}", usuarioId);
         return ResponseEntity.ok(carrito);
     }
@@ -60,6 +65,10 @@ public class CarritoController {
 
         log.info("Petición POST recibida: Agregar producto {} al carrito del usuario {}", request.getProductoId(), usuarioId);
         CarritoDTO carrito = carritoService.agregarProducto(usuarioId, request);
+
+        carrito.add(linkTo(methodOn(CarritoController.class).obtenerCarrito(carrito.getUsuarioId())).withSelfRel());
+        carrito.add(linkTo(methodOn(CarritoController.class).vaciarCarrito(carrito.getUsuarioId())).withRel("vaciar"));
+
         log.debug("Producto {} agregado correctamente al carrito de {}", request.getProductoId(), usuarioId);
         return ResponseEntity.ok(carrito);
     }
@@ -73,6 +82,10 @@ public class CarritoController {
     public ResponseEntity<CarritoDTO> obtenerCarrito(@PathVariable String usuarioId) {
         log.info("Petición GET recibida: Consultar carrito del usuario {}", usuarioId);
         CarritoDTO carrito = carritoService.obtenerCarrito(usuarioId);
+
+        carrito.add(linkTo(methodOn(CarritoController.class).obtenerCarrito(carrito.getUsuarioId())).withSelfRel());
+        carrito.add(linkTo(methodOn(CarritoController.class).vaciarCarrito(carrito.getUsuarioId())).withRel("vaciar"));
+
         return ResponseEntity.ok(carrito);
 
     }
