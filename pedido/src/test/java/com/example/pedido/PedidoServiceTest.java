@@ -28,25 +28,16 @@ class PedidoServiceTest {
 
     @Test
     void deberiaRetornarPedidoCuandoExistePorId() {
-        // Given (Preparación del escenario usando tus datos reales)
         Pedido pedidoMock = new Pedido();
         pedidoMock.setId(1L);
         pedidoMock.setUsuarioId("user123");
         pedidoMock.setPrecioTotal(25000.0);
-
-        // When (Configuración del comportamiento del Mock del Repositorio)
         Mockito.when(repository.findById(1L))
                 .thenReturn(Optional.of(pedidoMock));
-
-        // Act (Llamada al método de tu capa Service)
         PedidoDTO resultado = service.obtenerPorId(1L);
-
-        // Assert (Validaciones basadas en Given-When-Then requeridas por la rúbrica)
         assertNotNull(resultado);
         assertEquals("user123", resultado.getUsuarioId());
         assertEquals(25000.0, resultado.getPrecioTotal());
-
-        // Verificación de interacción exigida por el indicador IE 3.1.2
         verify(repository).findById(1L);
     }
 }
