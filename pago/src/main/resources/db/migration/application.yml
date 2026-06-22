@@ -1,0 +1,30 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: pago
+  datasource:
+    url: jdbc:mysql://localhost:3307/db_pago
+    username: root
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+  flyway:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+    com.example.pago: DEBUG
+  file:
+    name: logs/pago.log
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true

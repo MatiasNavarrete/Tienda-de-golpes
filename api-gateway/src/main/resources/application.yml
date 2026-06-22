@@ -1,0 +1,29 @@
+server:
+  port: 9090
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: pedido
+          uri: lb://pedido
+          predicates:
+            - Path=/api/pedidos/**
+        - id: pago
+          uri: lb://pago
+          predicates:
+            - Path=/api/pagos/**
+        - id: envio
+          uri: lb://envio
+          predicates:
+            - Path=/api/envios/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka

@@ -1,13 +1,13 @@
 package com.example.envio.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.hateoas.RepresentationModel;
+import lombok.*;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EnvioDTO {
+@EqualsAndHashCode(callSuper = true) 
+public class EnvioDTO extends RepresentationModel<EnvioDTO> {
     private Long pedidoId;
     private String direccionDestino;
 }

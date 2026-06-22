@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -32,8 +34,13 @@ public class EnvioController {
             @ApiResponse(responseCode = "400", description = "Datos de envío inválidos, como dirección incompleta o código postal erróneo")
     })
     @PostMapping("/crear")
-    public Envio crear(@RequestBody EnvioDTO envioDTO) {
-        return envioService.crearEnvio(envioDTO);
+    public ResponseEntity<Envio> crear(@RequestBody EnvioDTO envioDTO) {
+        Envio envio = envioService.crearEnvio(envioDTO);
+
+        envio.add(linkTo(methodOn(EnvioController.class).listar()).withRel("todos"));
+        envio.add(linkTo(methodOn(EnvioController.class).crear(envioDTO)).withSelfRel());
+
+        return ResponseEntity.status(201).body(envio);
     }
 
     @Operation(
@@ -45,6 +52,7 @@ public class EnvioController {
     })
     @GetMapping("/listar")
     public List<Envio> listar() {
-        return envioService.listarTodos();
+        List<Envio> envios = envioService.listarTodos();
+        return envios;
     }
 }

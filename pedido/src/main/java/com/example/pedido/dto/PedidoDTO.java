@@ -1,14 +1,15 @@
 package com.example.pedido.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.List;
+import org.springframework.hateoas.RepresentationModel;
+import lombok.*;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PedidoDTO {
+@EqualsAndHashCode(callSuper = false)
+public class PedidoDTO extends RepresentationModel<PedidoDTO> {
+
+    private Long id;
     private String usuarioId;
     private Double precioTotal;
 }

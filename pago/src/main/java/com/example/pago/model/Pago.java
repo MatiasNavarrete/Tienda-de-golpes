@@ -1,20 +1,17 @@
 package com.example.pago.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.hateoas.RepresentationModel;
+import jakarta.persistence.*;
+import lombok.*;
+
 
 @Entity
 @Table(name = "pagos")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Pago {
+@EqualsAndHashCode(callSuper = false)
+public class Pago extends RepresentationModel<Pago> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

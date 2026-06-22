@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import java.util.List;
 
@@ -34,9 +35,11 @@ public class PagoController {
     })
     @PostMapping("/procesar")
     public Pago pagar(@RequestBody PagoDTO pagoDTO) {
-        return pagoService.procesarPago(pagoDTO);
+        Pago pago = pagoService.procesarPago(pagoDTO);
+        pago.add(linkTo(methodOn(PagoController.class).listar()).withRel("historial"));
+        pago.add(linkTo(methodOn(PagoController.class).pagar(pagoDTO)).withSelfRel());
+        return pago;
     }
-
     @Operation(
             summary = "Obtener historial de pagos",
             description = "Retorna una lista completa de todas las transacciones y cobros registrados en el sistema"
@@ -48,4 +51,5 @@ public class PagoController {
     public List<Pago> listar() {
         return pagoService.listarPagos();
     }
+
 }

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import java.util.List;
 
@@ -48,7 +49,15 @@ public class PedidoController {
     @GetMapping("/{id}")
     public ResponseEntity<PedidoDTO> obtenerPorId(@PathVariable Long id) {
         PedidoDTO pedido = pedidoService.obtenerPorId(id);
-        return pedido != null ? ResponseEntity.ok(pedido) : ResponseEntity.notFound().build();
+
+        if (pedido != null) {
+            // Añadimos los links de navegación automática [cite: 134-135]
+            pedido.add(linkTo(methodOn(PedidoController.class).obtenerPorId(id)).withSelfRel());
+            pedido.add(linkTo(methodOn(PedidoController.class).listar()).withRel("todos"));
+
+            return ResponseEntity.ok(pedido);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @Operation(
