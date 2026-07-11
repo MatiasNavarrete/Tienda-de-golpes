@@ -1,5 +1,5 @@
 server:
-  port: 9090
+  port: 8097
 
 spring:
   application:
@@ -9,21 +9,26 @@ spring:
       discovery:
         locator:
           enabled: true
+          lower-case-service-id: true
       routes:
-        - id: pedido
-          uri: lb://pedido
+        - id: pedido-service
+          uri: lb://PEDIDO
           predicates:
             - Path=/api/pedidos/**
-        - id: pago
-          uri: lb://pago
+
+        - id: pago-service
+          uri: lb://PAGO
           predicates:
             - Path=/api/pagos/**
-        - id: envio
-          uri: lb://envio
+
+        - id: envio-service
+          uri: lb://ENVIO
           predicates:
             - Path=/api/envios/**
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
