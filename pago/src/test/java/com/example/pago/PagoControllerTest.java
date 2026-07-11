@@ -12,9 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
 import java.util.List;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,6 +45,7 @@ class PagoControllerTest {
         pagoSimulado.setMetodoPago("Tarjeta");
         pagoSimulado.setEstado("Listo");
         when(service.procesarPago(any(PagoDTO.class))).thenReturn(pagoSimulado);
+
         String json = """
         {
             "pedidoId": 100,
@@ -54,10 +53,10 @@ class PagoControllerTest {
             "metodoPago": "Tarjeta"
         }
         """;
-        mockMvc.perform(post("/api/pagos/procesar")
+        mockMvc.perform(post("/api/pagos")
                         .contentType("application/json")
                         .content(json))
-                .andExpect(status().isOk()) // Tu API devuelve 200 OK
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.estado").value("Listo"))
                 .andExpect(jsonPath("$.monto").value(25000.0));
@@ -74,7 +73,7 @@ class PagoControllerTest {
         pago.setMonto(25000.0);
         pago.setEstado("Listo");
         when(service.listarPagos()).thenReturn(List.of(pago));
-        mockMvc.perform(get("/api/pagos/historial"))
+        mockMvc.perform(get("/api/pagos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].pedidoId").value(100));
