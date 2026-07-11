@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  eureka-server:
+    build: ./eureka-server
+    ports:
+      - "8761:8761"
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8097:8097"
+    depends_on:
+      - eureka-server
+  pedido:
+    build: ./pedido
+    ports:
+      - "8086:8086"
+    depends_on:
+      - eureka-server
+
+  pago:
+    build: ./pago
+    ports:
+      - "8085:8085"
+    depends_on:
+      - eureka-server
+
+  envio:
+    build: ./envio
+    ports:
+      - "8084:8084"
+    depends_on:
+      - eureka-server
