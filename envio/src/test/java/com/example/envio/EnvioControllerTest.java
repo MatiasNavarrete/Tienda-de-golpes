@@ -51,10 +51,10 @@ class EnvioControllerTest {
             "direccionDestino": "Av. San Antonio 123, Valparaíso"
         }
         """;
-        mockMvc.perform(post("/api/envios/crear")
+        mockMvc.perform(post("/api/envios")
                         .contentType("application/json")
                         .content(json))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.direccionDestino").value("Av. San Antonio 123, Valparaíso"))
                 .andExpect(jsonPath("$.estadoEnvio").value("Preparando"));
@@ -70,7 +70,7 @@ class EnvioControllerTest {
         envio.setDireccionDestino("Av. San Antonio 123, Valparaíso");
         envio.setEstadoEnvio("Preparando");
         when(service.listarTodos()).thenReturn(List.of(envio));
-        mockMvc.perform(get("/api/envios/listar"))
+        mockMvc.perform(get("/api/envios"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].pedidoId").value(100))

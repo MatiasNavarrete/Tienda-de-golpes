@@ -62,9 +62,7 @@ class PedidoControllerTest {
             "precioTotal": 25000.0
         }
         """;
-
-        // Se corrige la ruta a /api/pedidos/crear y el estado esperado a isOk()
-        mockMvc.perform(post("/api/pedidos/crear")
+        mockMvc.perform(post("/api/pedidos")
                         .contentType("application/json")
                         .content(json))
                 .andExpect(status().isOk())

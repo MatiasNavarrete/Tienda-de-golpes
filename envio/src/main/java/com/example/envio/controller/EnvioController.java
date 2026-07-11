@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import org.springframework.http.ResponseEntity;
 
@@ -24,35 +25,25 @@ public class EnvioController {
     @Autowired
     private EnvioService envioService;
 
-    @Operation(
-            summary = "Crear un nuevo despacho de envío",
-            description = "Registra una nueva orden de despacho en el sistema logístico, asignando dirección y datos de entrega"
-    )
+    @Operation(summary = "Crear un nuevo despacho de envío", description = "Registra una nueva orden de despacho en el sistema logístico, asignando dirección y datos de entrega")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Despacho generado y agendado correctamente",
-                    content = @Content(schema = @Schema(implementation = Envio.class))),
+            @ApiResponse(responseCode = "201", description = "Despacho generado y agendado correctamente", content = @Content(schema = @Schema(implementation = Envio.class))),
             @ApiResponse(responseCode = "400", description = "Datos de envío inválidos, como dirección incompleta o código postal erróneo")
     })
-    @PostMapping("/crear")
-    public ResponseEntity<Envio> crear(@RequestBody EnvioDTO envioDTO) {
+    @PostMapping
+    public ResponseEntity<Envio> crear(@Valid @RequestBody EnvioDTO envioDTO) {
         Envio envio = envioService.crearEnvio(envioDTO);
-
         envio.add(linkTo(methodOn(EnvioController.class).listar()).withRel("todos"));
         envio.add(linkTo(methodOn(EnvioController.class).crear(envioDTO)).withSelfRel());
-
         return ResponseEntity.status(201).body(envio);
     }
 
-    @Operation(
-            summary = "Listar todos los envíos",
-            description = "Retorna un listado con el estado logístico de todos los despachos registrados"
-    )
+    @Operation(summary = "Listar todos los envíos", description = "Retorna un listado con el estado logístico de todos los despachos registrados")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Listado logístico recuperado con éxito")
     })
-    @GetMapping("/listar")
-    public List<Envio> listar() {
-        List<Envio> envios = envioService.listarTodos();
-        return envios;
+    @GetMapping
+    public ResponseEntity<List<Envio>> listar() {
+        return ResponseEntity.ok(envioService.listarTodos());
     }
 }
