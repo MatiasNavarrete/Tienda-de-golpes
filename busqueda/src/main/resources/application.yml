@@ -1,0 +1,24 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: busqueda-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/busqueda_db?createDatabaseIfNotExist=true
+    username: root
+    password: ""
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+springdoc:
+  webmvc:
+    api-docs:
+      enabled: true
+  hateoas:
+    enabled: false

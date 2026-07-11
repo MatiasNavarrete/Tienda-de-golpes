@@ -6,6 +6,7 @@ import com.example.notificaciones.model.Notificacion;
 import com.example.notificaciones.service.NotificacionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.EntityModel;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
@@ -22,7 +23,7 @@ public class NotificacionController {
 
     @PostMapping
     @Operation(summary = "Recibir y procesar una notificación", description = "Recibe el DTO desde otros microservicios, lo guarda en la DB y genera enlaces HATEOAS")
-    public ResponseEntity<EntityModel<NotificacionDto>> recibirNotificacion(@RequestBody NotificacionDto dto) {
+    public ResponseEntity<EntityModel<NotificacionDto>> recibirNotificacion(@RequestBody @Valid NotificacionDto dto) {
         notificacionService.procesarNotificacion(dto);
 
         EntityModel<NotificacionDto> modelo = EntityModel.of(dto);

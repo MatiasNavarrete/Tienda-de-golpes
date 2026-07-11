@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            # 1. Ruta hacia Usuario
+            - id: usuarios
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/usuarios/**
+
+            # 2. Ruta hacia Búsqueda
+            - id: busqueda
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/busqueda/**
+
+            # 3. Ruta hacia Notificaciones
+            - id: notificaciones
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/notificaciones/**
