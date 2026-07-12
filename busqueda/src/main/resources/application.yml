@@ -5,7 +5,7 @@ spring:
   application:
     name: busqueda-service
   datasource:
-    url: jdbc:mysql://localhost:3306/busqueda_db?createDatabaseIfNotExist=true
+    url: jdbc:mysql://host.docker.internal:3306/busqueda_db
     username: root
     password: ""
     driver-class-name: com.mysql.cj.jdbc.Driver

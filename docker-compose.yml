@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    restart: always
+
+  usuario:
+    build: ./usuarios
+    ports:
+      - "8081:8081"
+    restart: always
+
+  busqueda:
+    build: ./busqueda
+    ports:
+      - "8082:8082"
+    restart: always
+
+  notificaciones:
+    build: ./notificaciones
+    ports:
+      - "8083:8083"
+    restart: always
