@@ -1,44 +1,48 @@
-# 🛒 Tienda de Golpes - Arquitectura de Microservicios
+# 🛒 Sistema Integrado de Microservicios - Tienda de Golpes y Reseñas
 
-Ecosistema distribuido y escalable desarrollado en *Java 21* con *Spring Boot*, diseñado bajo un patrón de arquitectura limpia y comunicación asrónica/sincrónica entre servicios. Las bases de datos se gestionan de forma independiente mediante **Flyway Migrations*.
+## 📝 Descripción del Proyecto
+Este proyecto consiste en una arquitectura distribuida basada en microservicios independientes para la gestión de una plataforma de comercio electrónico ("Tienda de Golpes"). El ecosistema resuelve de extremo a extremo el ciclo de venta, permitiendo la administración de cuentas de usuario, catálogo indexado de productos con hipermedios, orquestación de pedidos, procesamiento seguro de pagos, logística de envíos y un sistema automatizado de feedback y reseñas con validación reactiva inter-servicio.
 
----
-
-## 👥 Integrantes del Proyecto
-* *Alexander Campos* (Desarrollador de Pedidos, Pagos, Envios y Reseñas)
-* *Matías Navarrete* (Desarrollador de Usuarios, Notificaciones y Búsqueda)
-* *Jose Romero* (Desarrollador de Productos, Inventario y Carrito)
+## 👥 Integrantes del Equipo y Roles Técnicos
+* **Alexander Campos**: Desarrollador del Módulo de Operaciones, Transacciones e Infraestructura (Servicios de Pedidos, Pagos, Envíos, Reseñas, Servidor Eureka y API Gateway Transaccional).
+* **Matias Navarrete**: Desarrollador del Módulo Core, Catálogo y Mensajería (Servicios de Usuario, Búsqueda HATEOAS, Notificaciones y API Gateway Core).
 
 ---
 
-## 🗺️ Mapa de Puertos y Arquitectura
-
-El ecosistema se distribuye en los siguientes puertos locales para evitar colisiones y mantener el aislamiento de responsabilidades:
-
-| Microservicio | Puerto | Base de Datos | Descripción |
-| :--- | :---: | :--- | :--- |
-| *ms-productos* | 8080 | db_productos | Catálogo central de artículos de la tienda. |
-| *ms-usuarios* | 8081 | db_usuarios | Gestión de cuentas de usuario y credenciales. |
-| *ms-carrito* | 8082 | db_carrito | Almacenamiento temporal de productos por cliente. |
-| *ms-notificaciones*| 8083 | db_notificaciones | Historial de alertas de compra enviadas. |
-| *ms-envios* | 8084 | - | Simulación de órdenes de despacho. |
-| *ms-pagos* | 8085 | - | Pasarela interna de aprobación de transacciones. |
-| *ms-pedido* | 8086 | db_pedido | Motor transaccional de compras y liquidación. |
-| *ms-busqueda* | 8087 | db_busqueda | Motor descentralizado para filtros e indexación rápida. |
-| *ms-resena* | 8088 | db_resena | Calificaciones y comentarios validados de clientes. |
-| *ms-inventario* | 9090 | db_inventario | Control físico y stock de productos en tiempo real. |
+## 🛠️ Stack Tecnológico
+* **Lenguaje:** Java 21 / Java 24
+* **Framework Principal:** Spring Boot
+* **Persistencia:** JPA + Hibernate con bases de datos MySQL independientes
+* **Estrategia de Migración:** Flyway para control de versiones de esquemas SQL
+* **Documentación:** Swagger / OpenAPI 3
+* **Orquestación y Contenedores:** Docker & Docker Compose
 
 ---
 
-## 🧪 Flujo de Verificación y Pruebas (Postman)
+## 🚀 Listado de Microservicios e Infraestructura
 
-Para defender el proyecto ante la comisión, los endpoints principales se gatillan en el siguiente orden estratégico:
+El ecosistema está compuesto por los siguientes componentes autónomos distribuidos por puertos:
 
-### 1. Cargar el Carrito (8082)
-* *Endpoint:* POST http://localhost:8082/api/v1/carrito/{usuarioId}
-* *Body (JSON):*
-```json
-{
-  "productoId": 1,
-  "cantidad": 2
-}
+### Módulo Transaccional (Alexander Campos)
+1. **Eureka Server (`eureka-server`)** [Puerto `8761`]: Servidor de descubrimiento y registro dinámico de instancias.
+2. **API Gateway Transaccional (`api-gateway`)** [Puerto `8097`]: Enrutador perimetral del flujo transaccional.
+3. **ms-pedido** [Puerto `8086`]: Lógica de negocio para la generación y estados de órdenes de compra.
+4. **ms-pago** [Puerto `8085`]: Gestión y confirmación de transacciones financieras de los pedidos.
+5. **ms-envio** [Puerto `8084`]: Logística de despachos, asignación y seguimiento de entregas.
+6. **ms-resena** [Puerto `8088`]: Sistema de calificación y feedback. Utiliza `WebClient` para validar en tiempo real la existencia de un pedido en el puerto `8086` antes de guardar la reseña.
+
+### Módulo Core y Catálogo (Matias Navarrete)
+7. **API Gateway Core (`api-gateway-core`)** [Puerto `8080`]: Punto de entrada centralizado puro implementado con Spring Cloud Gateway MVC.
+8. **ms-usuario** [Puerto `8081`]: Gestión de cuentas de usuario, identidades y control de accesos.
+9. **ms-busqueda** [Puerto `8082`]: Catálogo e indexación de productos. Implementa el Nivel 3 de Madurez de Richardson (HATEOAS) inyectando hipermedios relacionales.
+10. **ms-notificaciones** [Puerto `8083`]: Emisión de alertas asíncronas, correos electrónicos y avisos de stock del sistema.
+
+---
+
+## 🧭 Rutas Principales del API Gateway
+
+Las solicitudes externas se unifican a través de los Gateways y se redirigen de forma semántica hacia la red interna de contenedores:
+
+### Gateway Transaccional (Puerto 8097)
+* `GET /api/pedidos/**` ➔ Redirección interna hacia `ms-pedido`
+* `POST /api/pagos
